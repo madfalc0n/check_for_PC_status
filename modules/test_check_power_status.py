@@ -2,7 +2,6 @@ import ctypes
 from ctypes import wintypes
 import time
 
-
 class SYSTEM_POWER_STATUS(ctypes.Structure):
     _fields_ = [
         ('ACLineStatus', wintypes.BYTE),
@@ -14,7 +13,6 @@ class SYSTEM_POWER_STATUS(ctypes.Structure):
     ]
 
 SYSTEM_POWER_STATUS_P = ctypes.POINTER(SYSTEM_POWER_STATUS)
-
 GetSystemPowerStatus = ctypes.windll.kernel32.GetSystemPowerStatus
 GetSystemPowerStatus.argtypes = [SYSTEM_POWER_STATUS_P]
 GetSystemPowerStatus.restype = wintypes.BOOL
@@ -22,11 +20,12 @@ GetSystemPowerStatus.restype = wintypes.BOOL
 status = SYSTEM_POWER_STATUS()
 if not GetSystemPowerStatus(ctypes.pointer(status)):
     raise ctypes.WinError()
-print('ACLineStatus', status.ACLineStatus)
-print('BatteryFlag', status.BatteryFlag)
-print('BatteryLifePercent', status.BatteryLifePercent)
-print('BatteryLifeTime', status.BatteryLifeTime)
-print('BatteryFullLifeTime', status.BatteryFullLifeTime)
+
+# print('ACLineStatus', status.ACLineStatus)
+# print('BatteryFlag', status.BatteryFlag)
+# print('BatteryLifePercent', status.BatteryLifePercent)
+# print('BatteryLifeTime', status.BatteryLifeTime)
+# print('BatteryFullLifeTime', status.BatteryFullLifeTime)
 
 user32 = ctypes.windll.User32
 #
