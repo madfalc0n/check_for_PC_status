@@ -3,7 +3,7 @@ import cv2
 
 
 print("start caputer")
-cap = cv2.VideoCapture(0)
+# cap = cv2.VideoCapture(0)
 # print(cap.isOpened())
 width, height = cap.get(3), cap.get(4)
 
