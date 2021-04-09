@@ -30,7 +30,7 @@ def get_power_status():
     # print('BatteryLifeTime', status.BatteryLifeTime)
     # print('BatteryFullLifeTime', status.BatteryFullLifeTime)
     result['ACLineStatus'] = status.ACLineStatus
-    result['BatteryFlag'] = status.BatteryFlag
+    # result['BatteryFlag'] = status.BatteryFlag
     result['BatteryLifePercent'] = status.BatteryLifePercent
     result['BatteryLifeTime'] = status.BatteryLifeTime
     result['BatteryFullLifeTime'] = status.BatteryFullLifeTime
