@@ -16,6 +16,17 @@ def get_power_status():
         # print('Unlocked')
         result['windowlocked'] = 0
 
+    if result['ACLineStatus']:
+        result['ACLineStatus'] = 'ON'
+    else:
+        result['ACLineStatus'] = 'OFF'
+
+    if result['windowlocked']:
+        result['windowlocked'] = 'OFFLINE'
+    else:
+        result['windowlocked'] = 'ONLINE'
+
+
     return result
 
 #test mode
