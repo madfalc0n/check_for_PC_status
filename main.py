@@ -8,6 +8,7 @@ import cv2
 from threading import Thread, Lock
 import argparse
 import keyboard
+import os, sys
 
 lock = Lock()
 
@@ -19,7 +20,7 @@ def check_HW_status(mode=1):
     if mode == -1:
         PC_status = get_power_status()
         for key, val in PC_status.items():
-                print(f"----->{key} : {val}")
+                print(f"-----> {key} : {val}")
         text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
         status_field = PC_status.copy()
         status_new_field = PC_status.copy()
@@ -27,7 +28,7 @@ def check_HW_status(mode=1):
     elif mode == 1:
         while True:
             if system_kill == 1:
-                print("--$BREAKING FUNCTION : CHECK_HW_STATUS")
+                print("--$ BREAKING FUNCTION : CHECK_HW_STATUS")
                 break
             if system_op == 1:
                 PC_status = get_power_status()
@@ -47,14 +48,17 @@ def post_process(mode=1,token=None,url=None):
     """
     global text_form
     global system_kill, system_op
+    global user_id
 
 
     if mode == -1: ##initializing TEST
         initializing_text = "---INITIALIZING TEST MODE---\n"
         tb = telegram_bot(token)
-        tb.post_telegram(initializing_text + text_form)
         user_info = tb.receive_msg()
-        print(f"----->Current User Count : {len(user_info)}")
+        print(f"-----> Current User Count : {len(user_info)}")
+        user_id = list(user_info.keys())[0]
+        print(f"-----> USER ID : {user_id}")
+        tb.post_telegram(initializing_text + text_form, user_id)
 
     elif mode == 0: ##Slack 
         # url = 'YOUR SLACK WORKSPACE URL'
@@ -65,11 +69,11 @@ def post_process(mode=1,token=None,url=None):
         # token = 'YOUR TELEGRAM BOT TOKEN'
         while True:
             if system_kill == 1:
-                print("--$BREAKING FUNCTION : POST_PROCESS")
+                print("--$ BREAKING FUNCTION : POST_PROCESS")
                 break
             if system_op == 2:
                 tb = telegram_bot(token)
-                tb.post_telegram(text_form)
+                tb.post_telegram(text_form,user_id)
                 # print(f"DEBUG : SEND TO TELEGRAM FUNCTION COUNT : {(i%10)+1}")
                 system_op += 1
             time.sleep(0.01)
@@ -80,10 +84,9 @@ def status_check():
     global status_field, status_new_field
     global system_kill, system_op
 
-
     while True:
         if system_kill == 1:
-            print("--$BREAKING FUNCTION : STATUS_CHECK")
+            print("--$ BREAKING FUNCTION : STATUS_CHECK")
             break
         if system_op == 3:
             cur_time = time.localtime()
@@ -103,7 +106,6 @@ def status_check():
 def system_input_check():
     global system_kill, system_op, check_timer
 
-
     time_val = 100
     i = 0
     while True:
@@ -115,7 +117,7 @@ def system_input_check():
                 print("----------------------------------")
                 print("SYSTEM STOPPING BY KEY PRESSED('Q')")
                 print("----------------------------------")
-                print("--$BREAKING FUNCTION : SYSTEM_INPUT_CHECK")
+                print("--$ BREAKING FUNCTION : SYSTEM_INPUT_CHECK")
                 system_kill = 1                
             finally:
                 lock.release()
@@ -154,20 +156,28 @@ if __name__ == "__main__":
     check_timer = 5
     system_kill = 0
     system_op = 0
+    user_id = ''
     
+    
+    if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+        os.system("cls")
+    else:
+        os.system("clear")
+    
+
     print("----------------------------------")
     print("-------CHECK YOUR PC STATUS-------")
     print("----------------------------------")
     print()
 
     print("----------------------------------")
-    print("--$Initializing HW TEST")
+    print("--$ Initializing HW TEST")
     check_HW_status(mode=-1)
     print("-----> DONE")
     print()
 
     print("----------------------------------")
-    print("--$Initializing CAM TEST")
+    print("--$ Initializing CAM TEST")
     frame = capture(mode=-1)
     cur_time = time.localtime()
     cur_time = f"{cur_time[0]}{cur_time[1]}{cur_time[2]}{cur_time[3]}{cur_time[4]}{cur_time[5]}"
@@ -177,28 +187,22 @@ if __name__ == "__main__":
     print()
 
     print("----------------------------------")
-    print("--$Initializing Communication TEST")
-    
+    print("--$ Initializing Communication TEST")
     post_process(mode=-1, token=token, url=url)
     print("-----> DONE")
     print()
 
     print("----------------------------------")
-    print("--$Initializing Thread")
+    print("--$ Initializing Thread")
     print("-----> READY...", end='')
     th_hwcheck_1 = Thread(target=check_HW_status, args=(mode,))
     th_hwcheck_1.setDaemon(True)
-    
     th_post_1 = Thread(target=post_process, args=(mode, token,url))
     th_post_1.setDaemon(True)
-
     th_status_1 = Thread(target=status_check)
     th_status_1.setDaemon(True)
-
-
     th_status_2 = Thread(target=system_input_check)
     th_status_2.setDaemon(True)
-    
     print("DONE")
     print("-----> START")
     print()
@@ -207,7 +211,6 @@ if __name__ == "__main__":
     th_post_1.start()
     th_status_1.start()
     th_status_2.start()
-
     th_hwcheck_1.join()
     th_post_1.join()
     th_status_1.join()
