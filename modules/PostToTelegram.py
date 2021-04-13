@@ -20,6 +20,7 @@ class telegram_bot:
         user_dict = dict()
         for user_info in updates:
             # print(user_info)
+            # print(len(user_info))
             user_id = user_info.message['chat']['id']
             user_name = user_info.message['chat']['first_name']
             text = user_info.message['text'] 
@@ -30,5 +31,5 @@ class telegram_bot:
         return user_dict 
 
 if __name__ == "__main__":
-    tb = telegram_bot(token='1661842188:AAHmsUmjJKzZj_SFaLQ5gGBzQwL-cTsfD50')
-    tb.receive_msg()
+    tb = telegram_bot(token='1750354982:AAEnceNQ8u_8IBLDXbdEr4RDEXc1Nie0I64')
+    print(tb.receive_msg())
