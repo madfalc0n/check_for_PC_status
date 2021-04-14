@@ -21,7 +21,8 @@ def check_HW_status(mode=1):
         PC_status = get_power_status()
         for key, val in PC_status.items():
                 print(f"-----> {key} : {val}")
-        text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
+        # text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
+        text_form = f"POWER Line Status : {PC_status['ACLineStatus']}"
         status_field = PC_status.copy()
         status_new_field = PC_status.copy()
 
@@ -33,7 +34,8 @@ def check_HW_status(mode=1):
             if system_op == 1:
                 PC_status = get_power_status()
                 status_field = PC_status.copy()
-                text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
+                # text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
+                text_form = f"POWER Line Status : {PC_status['ACLineStatus']}"
                 system_op += 1
                 # print(f"DEBUG : index : {i+1} : {text_form}")
                 # print(f"DEBUG : POWER CHECK FUNCTION COUNT : {(i%10)+1}")
@@ -49,6 +51,7 @@ def post_process(mode=1,token=None,url=None):
     global text_form
     global system_kill, system_op
     global user_id
+    global full_name
 
 
     if mode == -1: ##initializing TEST
@@ -58,7 +61,12 @@ def post_process(mode=1,token=None,url=None):
         print(f"-----> Current User Count : {len(user_info)}")
         user_id = list(user_info.keys())[0]
         print(f"-----> USER ID : {user_id}")
-        tb.post_telegram(initializing_text + text_form, user_id)
+        print(f"-----> Send HW status......", end='')
+        tb.post_telegram(user_id, initializing_text + text_form )
+        print(f"DONE")
+        print(f"-----> Send Captured image......", end='')
+        tb.send_photo(full_name, user_id)
+        print(f"DONE")
 
     elif mode == 0: ##Slack 
         # url = 'YOUR SLACK WORKSPACE URL'
@@ -73,7 +81,7 @@ def post_process(mode=1,token=None,url=None):
                 break
             if system_op == 2:
                 tb = telegram_bot(token)
-                tb.post_telegram(text_form,user_id)
+                tb.post_telegram(user_id, text_form)
                 # print(f"DEBUG : SEND TO TELEGRAM FUNCTION COUNT : {(i%10)+1}")
                 system_op += 1
             time.sleep(0.01)
@@ -94,7 +102,7 @@ def status_check():
             print("----------------------------------")
             print(f"CUR TIME : {cur_time}")
             print(f"POWER Line Status : {status_field['ACLineStatus']} : {status_new_field['ACLineStatus']}")
-            print(f"Window Locked : {status_field['windowlocked']} : {status_new_field['windowlocked']}")
+            # print(f"Window Locked : {status_field['windowlocked']} : {status_new_field['windowlocked']}")
             print("----------------------------------")
             print()
             system_op = 0
@@ -132,6 +140,16 @@ def system_input_check():
 
 
 if __name__ == "__main__":
+    if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+        os.system("cls")
+    else:
+        os.system("clear")
+    
+    print("----------------------------------")
+    print("-------CHECK YOUR PC STATUS-------")
+    print("----------------------------------")
+    print()
+
     #main.py 실행시 옵션을 설정할 수 있도록 argparse 객체 지정 
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--mode', type=int, default=1, 
@@ -140,14 +158,24 @@ if __name__ == "__main__":
                         help='when using telegram communication, input your TelegramBot token')
     parser.add_argument('-u', '--url', type=str, default='None', 
                         help='when using slack communication, input your webhook url')
-    parser.add_argument('-p', '--path', type=str, default='log_pic/', 
+    parser.add_argument('-lp', '--pic_path', type=str, default='log_pic/', 
                         help='Save capture image path, default "log_pic/"')
+    parser.add_argument('-ls', '--stat_path', type=str, default='log_stat/', 
+                        help='Save HW status log path, default "log_stat/"')
+
 
     args = parser.parse_args()
     mode = args.mode
     token = args.token
     url = args.url
-    path = args.path
+    pic_log_path = args.pic_path
+    if not os.path.exists(pic_log_path):
+        print(f"--$ INFO : There is no '{pic_log_path}' Create a new directory.")
+        os.makedirs(pic_log_path)
+    stat_log_path = args.stat_path
+    if not os.path.exists(stat_log_path):
+        print(f"--$ INFO : There is no '{stat_log_path}' Create a new directory.")
+        os.makedirs(stat_log_path)
 
     #global
     text_form = ''
@@ -158,18 +186,7 @@ if __name__ == "__main__":
     system_op = 0
     user_id = ''
     
-    
-    if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
-        os.system("cls")
-    else:
-        os.system("clear")
-    
-
-    print("----------------------------------")
-    print("-------CHECK YOUR PC STATUS-------")
-    print("----------------------------------")
     print()
-
     print("----------------------------------")
     print("--$ Initializing HW TEST")
     check_HW_status(mode=-1)
@@ -181,7 +198,7 @@ if __name__ == "__main__":
     frame = capture(mode=-1)
     cur_time = time.localtime()
     cur_time = f"{cur_time[0]}{cur_time[1]}{cur_time[2]}{cur_time[3]}{cur_time[4]}{cur_time[5]}"
-    full_name = path + cur_time + '_initializing_img.jpg'
+    full_name = pic_log_path  + cur_time + '_initializing_img.jpg'
     cv2.imwrite(full_name,frame)
     print("-----> DONE")
     print()

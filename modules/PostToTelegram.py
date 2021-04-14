@@ -9,9 +9,9 @@ class telegram_bot:
         self.token = token
         self.bot = telegram.Bot(token=token)
 
-    def post_telegram(self, msg='set msg', user_id='None'):
+    def post_telegram(self, user_id='None', msg='set msg'):
         # chat_id = "1769218456"
-        self.bot.sendMessage(chat_id = self.user_id , text=msg)
+        self.bot.sendMessage(chat_id = user_id , text=msg)
 
     def receive_msg(self):
         updates = self.bot.get_updates()
@@ -30,14 +30,22 @@ class telegram_bot:
         return user_dict
 
     def send_location(self, user_id='None'):
-        latitude = 37.4874260
-        longitude = 126.9270750
+        latitude = 37.4981
+        longitude = 126.953089
         # chat_id = "1769218456"
         # user_id = chat_id
         self.bot.sendLocation(user_id, latitude, longitude, 
                         disable_notification = True)
 
+    def send_photo(self, image='None', user_id='None'):
+        chat_id = "1769218456"
+        user_id = chat_id
+        self.bot.sendPhoto(user_id, open(image, 'rb'))
+
+
 if __name__ == "__main__":
     tb = telegram_bot(token='1750354982:AAEnceNQ8u_8IBLDXbdEr4RDEXc1Nie0I64')
-    # print(tb.receive_msg())
-    print(tb.send_location())
+    print(tb.receive_msg())
+    # print(tb.send_location())
+    # file = 'log_pic/2021414155145_initializing_img.jpg'
+    # print(tb.send_photo(image=file))

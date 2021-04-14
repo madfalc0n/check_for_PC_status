@@ -50,11 +50,11 @@ def main():
     
     # Signature 생성에 필요한 항목
     method = "GET"
-    IP_ADDRESSS = "YOUR IP"
+    IP_ADDRESSS = "YOURIP"
     basestring = f"/geolocation/v2/geoLocation?ip={IP_ADDRESSS}&ext=t&responseFormatType=json"
     timestamp = str(int(time.time() * 1000))
-    access_key = "YOUR ACCESS key ID"  # access key id (from portal or sub account)
-    secret_key = "YOUR SEcRET KEY"  # secret key (from portal or sub account)
+    access_key = "YOUR_ACCESS_KEY"  # access key id (from portal or sub account)
+    secret_key = "YOUR_SECRET_KEY"  # secret key (from portal or sub account)
     signature = make_signature(method, basestring, timestamp, access_key, secret_key)
     
     # GET Request
