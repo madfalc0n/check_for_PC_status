@@ -2,8 +2,10 @@
 from modules.CheckPowerStatus_psutil import get_power_status
 from modules.PostToSlack import post_slack
 from modules.PostToTelegram import telegram_bot
+from modules.logging import logging
 from modules.SaveCam import capture
 import time
+from time import strftime, localtime, gmtime
 import cv2
 from threading import Thread, Lock
 import argparse
@@ -14,7 +16,7 @@ lock = Lock()
 
 def check_HW_status(mode=1):
     global text_form
-    global status_field, status_new_field
+    global status_field, status_old_field
     global system_kill, system_op
 
     if mode == -1:
@@ -24,7 +26,7 @@ def check_HW_status(mode=1):
         # text_form = f"POWER Line Status : {PC_status['ACLineStatus']} \nWindow Locked : {PC_status['windowlocked']}"
         text_form = f"POWER Line Status : {PC_status['ACLineStatus']}"
         status_field = PC_status.copy()
-        status_new_field = PC_status.copy()
+        status_old_field = PC_status.copy()
 
     elif mode == 1:
         while True:
@@ -79,33 +81,45 @@ def post_process(mode=1,token=None,url=None):
             if system_kill == 1:
                 print("--$ BREAKING FUNCTION : POST_PROCESS")
                 break
-            if system_op == 2:
+            if system_op == 3:
                 tb = telegram_bot(token)
                 tb.post_telegram(user_id, text_form)
                 # print(f"DEBUG : SEND TO TELEGRAM FUNCTION COUNT : {(i%10)+1}")
-                system_op += 1
+                system_op = 0
             time.sleep(0.01)
         
 
 
 def status_check():
-    global status_field, status_new_field
+    global status_field, status_old_field
     global system_kill, system_op
+    global stat_log_path
 
     while True:
         if system_kill == 1:
             print("--$ BREAKING FUNCTION : STATUS_CHECK")
             break
-        if system_op == 3:
-            cur_time = time.localtime()
-            cur_time = f"{cur_time[0]}-{cur_time[1]}-{cur_time[2]} {cur_time[3]}:{cur_time[4]}:{cur_time[5]}"
+        if system_op == 2:
+            cur_time = strftime("%a, %d %b %Y %H:%M:%S (KST)", localtime())
             print("----------------------------------")
-            print(f"CUR TIME : {cur_time}")
-            print(f"POWER Line Status : {status_field['ACLineStatus']} : {status_new_field['ACLineStatus']}")
-            # print(f"Window Locked : {status_field['windowlocked']} : {status_new_field['windowlocked']}")
+            print(cur_time)
+            # print(f"POWER Line Status : {status_field['ACLineStatus']} : {status_old_field['ACLineStatus']}")
+            if status_field['ACLineStatus'] != status_old_field['ACLineStatus']:
+                logtext = f"{cur_time} : POWER Line Status is Changed : {status_old_field['ACLineStatus']} -> {status_field['ACLineStatus']}" 
+                print(f"POWER Line Status is Changed : {status_old_field['ACLineStatus']} -> {status_field['ACLineStatus']}")
+                status_old_field['ACLineStatus'] = status_field['ACLineStatus']
+            else:
+                logtext = f"{cur_time} : POWER Line Status is not Changed : {status_field['ACLineStatus']}" 
+                print(f"POWER Line Status is not Changed : {status_field['ACLineStatus']}")
+            # print(f"Window Locked : {status_field['windowlocked']} : {status_old_field['windowlocked']}")
             print("----------------------------------")
             print()
-            system_op = 0
+            
+            #logging
+            full_name = stat_log_path + strftime("%Y%m%d", localtime()) + '_HW_log.log'
+            logging(full_name, logtext)
+            
+            system_op += 1
         time.sleep(0.01)
     
         
@@ -126,7 +140,7 @@ def system_input_check():
                 print("SYSTEM STOPPING BY KEY PRESSED('Q')")
                 print("----------------------------------")
                 print("--$ BREAKING FUNCTION : SYSTEM_INPUT_CHECK")
-                system_kill = 1                
+                system_kill = 1
             finally:
                 lock.release()
             break
@@ -137,7 +151,6 @@ def system_input_check():
             i = 0
         time.sleep(1/time_val)
     
-
 
 if __name__ == "__main__":
     if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
@@ -180,7 +193,7 @@ if __name__ == "__main__":
     #global
     text_form = ''
     status_field = {}
-    status_new_field = {}
+    status_old_field = {}
     check_timer = 5
     system_kill = 0
     system_op = 0
@@ -196,8 +209,7 @@ if __name__ == "__main__":
     print("----------------------------------")
     print("--$ Initializing CAM TEST")
     frame = capture(mode=-1)
-    cur_time = time.localtime()
-    cur_time = f"{cur_time[0]}{cur_time[1]}{cur_time[2]}{cur_time[3]}{cur_time[4]}{cur_time[5]}"
+    cur_time = time.strftime("%Y%m%d%H%M%S", time.localtime())
     full_name = pic_log_path  + cur_time + '_initializing_img.jpg'
     cv2.imwrite(full_name,frame)
     print("-----> DONE")
